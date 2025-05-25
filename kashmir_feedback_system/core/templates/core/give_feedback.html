@@ -1,0 +1,351 @@
+<!-- core/templates/core/give_feedback.html -->
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Give Feedback - KU Feedback System{% endblock title %}
+
+{% block extra_css %}
+<style>
+    /* Styles from previous iteration, ensure they match the new rating label structure if needed */
+    .rating-questions-container .question-item { margin-bottom: 1.5rem; padding: 1rem; background-color: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb; }
+    .rating-questions-container .question-text { display: block; margin-bottom: 0.75rem; font-weight: 500; color: #374151; }
+    .rating-questions-container .rating-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .rating-questions-container .rating-options label { /* This is the clickable area */
+        display: flex; 
+        flex-direction: column; /* Stack number/circle and text vertically if needed */
+        align-items: center; 
+        padding: 0.5rem; 
+        border: 1px solid #d1d5db; 
+        border-radius: 0.375rem; 
+        cursor: pointer; 
+        transition: all 0.2s ease-in-out; 
+        font-size: 0.875rem; 
+        min-width: 90px; /* Adjust for descriptive text */
+        text-align: center; 
+    }
+    .rating-questions-container .rating-options input[type="radio"] { /* Hide actual radio */
+        opacity: 0; width: 0; height: 0; position: absolute; 
+    }
+    /* Style the span that contains the descriptive text */
+    .rating-questions-container .rating-options input[type="radio"]:checked + span.rating-label-text { 
+        background-color: var(--color-custom-blue, #0ea5e9); 
+        color: white; 
+        border-color: var(--color-custom-blue, #0ea5e9); 
+        font-weight: 600; /* Make selected text bolder */
+    }
+    .rating-questions-container .rating-options label:hover span.rating-label-text { 
+        border-color: var(--color-custom-blue-dark, #0284c7); 
+        background-color: #eff6ff; /* Lighter blue on hover */
+    }
+    /* This span will hold the descriptive text like "Excellent", "Good" */
+    .rating-questions-container span.rating-label-text { 
+        padding: 0.375rem 0.625rem; /* Adjust padding */
+        border-radius: 0.25rem; 
+        border: 1px solid transparent; /* To maintain layout consistency on hover */
+        display: block; /* Make it take full width of label if flex-direction column */
+        width: 100%;
+    }
+
+    .input-method-toggle label { cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: background-color 0.2s, color 0.2s; }
+    .input-method-toggle input[type="radio"]:checked + label { background-color: var(--color-custom-blue, #0ea5e9); color: white; border-color: var(--color-custom-blue, #0ea5e9); }
+    .input-method-toggle input[type="radio"] { display: none; }
+
+    #audio-recorder-ui button { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; }
+    #audio-recorder-ui .start-btn { background-color: #22c55e; color: white; }
+    #audio-recorder-ui .start-btn:hover { background-color: #16a34a; }
+    #audio-recorder-ui .start-btn:disabled { background-color: #9ca3af; cursor: not-allowed;}
+    #audio-recorder-ui .stop-btn { background-color: #ef4444; color: white; margin-left: 0.5rem; }
+    #audio-recorder-ui .stop-btn:hover { background-color: #dc2626; }
+    #audio-recorder-ui .stop-btn:disabled { background-color: #9ca3af; cursor: not-allowed;}
+    #audio-status { margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-xl">
+        <h1 class="text-2xl sm:text-3xl font-bold text-custom-gray-dark mb-6 text-center">
+            Submit Your Valuable Feedback
+        </h1>
+
+        <form method="POST" enctype="multipart/form-data" id="giveFeedbackForm" novalidate>
+            {% csrf_token %}
+
+            <!-- Verbose Form Error Display (More Robust) -->
+            {% if form.non_field_errors %}
+                <div class="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg border border-red-300" role="alert">
+                    <p class="font-bold">Please correct the following general errors:</p>
+                    <ul class="mt-2 list-disc list-inside">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                {% if field.is_hidden %} <!-- Render hidden fields as is -->
+                    {{ field }}
+                {% else %}
+                    {% if field.name != 'rating1' and field.name != 'rating2' and field.name != 'rating3' and field.name != 'rating4' and field.name != 'rating5' and field.name != 'input_method' and field.name != 'is_anonymous' and field.name != 'text_feedback' and field.name != 'audio_feedback' %} 
+                        <!-- Default rendering for fields like category -->
+                        <div class="mb-6" id="field-{{ field.html_name }}-container">
+                            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-custom-gray-dark mb-1">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
+                            {% if field.errors %}<div class="mt-1 text-xs text-red-500 font-medium">{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Input Method Selection (Custom Layout) -->
+            <div class="mb-6">
+                <span class="block text-sm font-medium text-custom-gray-dark mb-2">Choose Feedback Method:</span>
+                <div class="flex space-x-4 input-method-toggle">
+                    {% for radio in form.input_method %}
+                    <div class="flex items-center">
+                        {{ radio.tag }} 
+                        <label for="{{ radio.id_for_label }}" class="ml-1">{{ radio.choice_label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                 {% if form.input_method.errors %}<div class="mt-1 text-xs text-red-500 font-medium">{% for error in form.input_method.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <!-- Text Feedback Area (Manually placed for specific ID and error handling) -->
+            <div id="text-feedback-container" class="mb-6">
+                <label for="{{ form.text_feedback.id_for_label }}" class="block text-sm font-medium text-custom-gray-dark mb-1">Detailed Feedback (Text)</label>
+                {{ form.text_feedback }}
+                {% if form.text_feedback.errors %}<div class="mt-1 text-xs text-red-500 font-medium">{% for error in form.text_feedback.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <!-- Audio Feedback Section (Manually placed) -->
+            <div id="audio-feedback-container" class="mb-6 hidden">
+                <label class="block text-sm font-medium text-custom-gray-dark mb-1">Feedback (Audio Recording)</label>
+                <div id="audio-recorder-ui" class="p-4 border rounded-lg bg-gray-50">
+                    <button type="button" id="startRecordBtn" class="start-btn">Start Recording</button>
+                    <button type="button" id="stopRecordBtn" class="stop-btn" disabled>Stop Recording</button>
+                    <div id="audio-status" class="mt-2">Status: Idle. Click Start to record (mockup) or upload a file below.</div>
+                    <div class="mt-3" id="audio-file-input-wrapper">
+                        {{ form.audio_feedback }} {# This is the Django file input field #}
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Max 10MB (e.g., .mp3, .wav).</p>
+                </div>
+                {% if form.audio_feedback.errors %}<div class="mt-1 text-xs text-red-500 font-medium">{% for error in form.audio_feedback.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <!-- Rating Questions Container (Dynamically Populated by JS) -->
+            <div id="rating-questions-container" class="mb-6 rating-questions-container">
+                <!-- JS will populate this section -->
+            </div>
+            
+                        <!-- Display errors for rating fields (if any) -->
+            {% if form.rating1.errors %}
+            <div class="mt-1 text-xs text-red-500 font-medium">
+                Rating for Question 1: {% for error in form.rating1.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+            {% if form.rating2.errors %}
+            <div class="mt-1 text-xs text-red-500 font-medium">
+                Rating for Question 2: {% for error in form.rating2.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+            {% if form.rating3.errors %}
+            <div class="mt-1 text-xs text-red-500 font-medium">
+                Rating for Question 3: {% for error in form.rating3.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+            {% if form.rating4.errors %}
+            <div class="mt-1 text-xs text-red-500 font-medium">
+                Rating for Question 4: {% for error in form.rating4.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+            {% if form.rating5.errors %}
+            <div class="mt-1 text-xs text-red-500 font-medium">
+                Rating for Question 5: {% for error in form.rating5.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+          
+            <!-- Anonymous Checkbox (Manually placed) -->
+            <div class="mb-8">
+                <div class="flex items-center">
+                    {{ form.is_anonymous }}
+                    <label for="{{ form.is_anonymous.id_for_label }}" class="ml-2 block text-sm text-custom-gray-dark">Submit Anonymously</label>
+                </div>
+                {% if form.is_anonymous.errors %}<div class="mt-1 text-xs text-red-500 font-medium">{% for error in form.is_anonymous.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-custom-blue hover:bg-custom-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-custom-blue-dark transition duration-150 ease-in-out">
+                    Submit Feedback
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Ensure these are valid JSON objects passed from your view
+    const categoriesData = JSON.parse('{{ categories_with_questions_json|escapejs|safe }}');
+    const ratingLabels = JSON.parse('{{ rating_labels_json|escapejs|safe }}'); // e.g., {"1": "Very Poor", "2": "Poor", ...}
+    
+    // Initial values from the Django form (e.g., after a validation error)
+    // For radio buttons, Django's form.field.value will give the selected value.
+    const initialFormValues = {
+        category: '{{ form.category.value|default_if_none:"" }}',
+        input_method: '{{ form.input_method.value|default_if_none:"TEXT" }}',
+        rating1: '{{ form.rating1.value|default_if_none:"" }}',
+        rating2: '{{ form.rating2.value|default_if_none:"" }}',
+        rating3: '{{ form.rating3.value|default_if_none:"" }}',
+        rating4: '{{ form.rating4.value|default_if_none:"" }}',
+        rating5: '{{ form.rating5.value|default_if_none:"" }}'
+    };
+
+    console.log("Initial Form Values for JS:", initialFormValues);
+    console.log("Categories Data from View:", categoriesData);
+    console.log("Rating Labels from View:", ratingLabels);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+        const ratingQuestionsContainer = document.getElementById('rating-questions-container');
+        const inputMethodRadios = document.querySelectorAll('input[name="{{ form.input_method.html_name }}"]');
+        const textFeedbackContainer = document.getElementById('text-feedback-container');
+        const audioFeedbackContainer = document.getElementById('audio-feedback-container');
+        const audioFileInput = document.getElementById('{{ form.audio_feedback.id_for_label }}');
+        const audioFileInputWrapper = document.getElementById('audio-file-input-wrapper'); // Wrapper for file input
+        const startRecordBtn = document.getElementById('startRecordBtn');
+        const stopRecordBtn = document.getElementById('stopRecordBtn');
+        const audioStatus = document.getElementById('audio-status');
+
+        function updateRatingQuestions(categoryId) {
+            console.log("JS: Updating rating questions for category ID:", categoryId);
+            ratingQuestionsContainer.innerHTML = ''; 
+            if (!categoryId || !categoriesData[categoryId]) {
+                console.log("JS: No category data or categoryId invalid for ratings.");
+                return;
+            }
+
+            const categoryInfo = categoriesData[categoryId];
+            const questions = categoryInfo.questions;
+            console.log("JS: Questions for this category:", questions);
+
+            if (questions && questions.length > 0) {
+                questions.forEach((questionText, index) => {
+                    const questionIndex = index + 1;
+                    const fieldName = `rating${questionIndex}`; // e.g., rating1, rating2
+
+                    const questionItemDiv = document.createElement('div');
+                    questionItemDiv.className = 'question-item';
+                    const questionLabel = document.createElement('span');
+                    questionLabel.className = 'question-text';
+                    questionLabel.textContent = `${questionIndex}. ${questionText}`;
+                    questionItemDiv.appendChild(questionLabel);
+
+                    const ratingOptionsDiv = document.createElement('div');
+                    ratingOptionsDiv.className = 'rating-options';
+
+                    // Iterate using the ratingLabels map { "1": "Very Poor", ... }
+                    for (const [value, desc] of Object.entries(ratingLabels)) {
+                        const ratingLabelEl = document.createElement('label');
+                        const radioInput = document.createElement('input');
+                        radioInput.type = 'radio';
+                        radioInput.name = fieldName; 
+                        radioInput.value = value; // value will be "1", "2", etc.
+                        
+                        if (initialFormValues[fieldName] && initialFormValues[fieldName] === value) {
+                            radioInput.checked = true;
+                        }
+                        
+                        const ratingDescSpan = document.createElement('span');
+                        ratingDescSpan.className = 'rating-label-text'; 
+                        ratingDescSpan.textContent = desc; // Use descriptive text
+                        
+                        ratingLabelEl.appendChild(radioInput);
+                        ratingLabelEl.appendChild(ratingDescSpan);
+                        ratingOptionsDiv.appendChild(ratingLabelEl);
+                    }
+                    questionItemDiv.appendChild(ratingOptionsDiv);
+                    ratingQuestionsContainer.appendChild(questionItemDiv);
+                });
+            } else {
+                console.log("JS: No questions found for this category in categoriesData.");
+            }
+        }
+
+        function toggleFeedbackInputFields() {
+            const checkedRadio = document.querySelector('input[name="{{ form.input_method.html_name }}"]:checked');
+            if (!checkedRadio) { // Should ideally not happen if form has an initial value
+                textFeedbackContainer.classList.remove('hidden'); // Default to text
+                audioFeedbackContainer.classList.add('hidden');
+                return;
+            }
+            const selectedMethod = checkedRadio.value;
+            console.log("JS: Toggling input fields. Selected method:", selectedMethod);
+
+            if (selectedMethod === 'TEXT') {
+                textFeedbackContainer.classList.remove('hidden');
+                audioFeedbackContainer.classList.add('hidden');
+                if (audioFileInput) audioFileInput.value = ''; 
+            } else if (selectedMethod === 'AUDIO') {
+                textFeedbackContainer.classList.add('hidden');
+                audioFeedbackContainer.classList.remove('hidden');
+                // The Start/Stop buttons are UI. The actual form.audio_feedback file input is inside audioFeedbackContainer.
+                const textInput = document.getElementById('{{ form.text_feedback.id_for_label }}');
+                if (textInput) textInput.value = ''; 
+            }
+        }
+
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                updateRatingQuestions(this.value);
+            });
+        } else {
+            console.error("JS Error: Category select dropdown not found! Check ID: {{ form.category.id_for_label }}");
+        }
+
+        if (inputMethodRadios.length > 0) {
+            inputMethodRadios.forEach(radio => {
+                radio.addEventListener('change', toggleFeedbackInputFields);
+            });
+        } else {
+            console.error("JS Error: Input method radio buttons not found! Check name: {{ form.input_method.html_name }}");
+        }
+        
+        if (startRecordBtn) {
+            startRecordBtn.addEventListener('click', function() {
+                audioStatus.textContent = "Status: Recording... (Mock - Please use file upload below for now)";
+                startRecordBtn.disabled = true;
+                stopRecordBtn.disabled = false;
+                if(audioFileInputWrapper) audioFileInputWrapper.classList.remove('hidden'); // Show file input
+                // In a real implementation, you'd start Web Audio API here.
+            });
+        }
+        if (stopRecordBtn) {
+            stopRecordBtn.addEventListener('click', function() {
+                audioStatus.textContent = "Status: Stopped. (Mock - Ensure file is selected below if recorded)";
+                startRecordBtn.disabled = false;
+                stopRecordBtn.disabled = true;
+                // In a real implementation, you'd stop Web Audio API and get the Blob.
+            });
+        }
+
+        // --- Initial setup on page load ---
+        if (categorySelect && initialFormValues.category) {
+            categorySelect.value = initialFormValues.category;
+        }
+        
+        const initialInputMethod = initialFormValues.input_method || 'TEXT';
+        const targetRadio = document.querySelector(`input[name="{{ form.input_method.html_name }}"][value="${initialInputMethod}"]`);
+        if (targetRadio) {
+            targetRadio.checked = true;
+        } else if (inputMethodRadios.length > 0) { // Fallback if initial value is somehow invalid
+            inputMethodRadios[0].checked = true; 
+        }
+
+        updateRatingQuestions(categorySelect ? categorySelect.value : null); // Use current value of select
+        toggleFeedbackInputFields();
+    });
+</script>
+{% endblock content %}

@@ -1,0 +1,124 @@
+<!-- core/templates/core/landing_page.html -->
+{% extends "core/base.html" %}
+{% load static %} <!-- Load static if you plan to use images specific to this page -->
+
+{% block title %}Welcome - Student Feedback System{% endblock title %}
+
+{% block content %}
+<!-- Hero Section -->
+<section id="hero" class="bg-gradient-to-br from-custom-blue to-sky-400 text-white pt-20 pb-20 md:pt-32 md:pb-28">
+    <div class="container mx-auto px-6 text-center">
+        <h1 class="text-4xl md:text-5xl lg:text-5xl font-bold mb-6 leading-tight">
+            Shape the Future of Your University Experience.
+        </h1>
+        <p class="text-lg md:text-xl mb-4 max-w-3xl mx-auto font-light">
+            Your voice matters. The Student Feedback Portal is here to bridge the gap between students and administration, ensuring your opinions drive meaningful improvements in teaching, infrastructure, and campus life.
+        </p>
+        <p class="text-md md:text-lg mb-10 max-w-2xl mx-auto">
+            Provide honest, constructive feedback easily and see the impact of your contributions.
+        </p>
+        <div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'core:student_dashboard' %}" class="bg-white text-custom-blue-dark font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-gray-100 transition duration-300 ease-in-out text-lg">
+                    Go to Dashboard
+                </a>
+            {% else %}
+                <a href="{% url 'core:signup' %}" class="bg-white text-custom-blue-dark font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-gray-100 transition duration-300 ease-in-out text-lg mr-4">
+                    Get Started
+                </a>
+                <a href="{% url 'core:login' %}" class="border-2 border-white text-white font-semibold py-3 px-8 rounded-lg hover:bg-white hover:text-custom-blue-dark transition duration-300 ease-in-out text-lg">
+                    Login
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-16 md:py-24 bg-white">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-custom-gray-dark mb-4">About This Platform</h2>
+            <p class="text-custom-gray max-w-2xl mx-auto">
+                A dedicated system designed to empower University students by providing a streamlined, transparent, and effective channel for feedback.
+            </p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8 text-center">
+            <div class="p-6">
+                <div class="text-custom-blue text-5xl mb-4">
+                    <!-- Placeholder for an icon, e.g., using Heroicons (heroicons.com) SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold text-custom-gray-dark mb-2">Voice Your Opinion</h3>
+                <p class="text-custom-gray">Easily submit feedback through text or voice, anonymously if you choose, across various categories like teaching, infrastructure, and campus services.</p>
+            </div>
+            <div class="p-6">
+                <div class="text-custom-blue text-5xl mb-4">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold text-custom-gray-dark mb-2">Drive Improvement</h3>
+                <p class="text-custom-gray">Your collective feedback provides actionable insights, helping the university identify areas for enhancement and track progress over time.</p>
+            </div>
+            <div class="p-6">
+                <div class="text-custom-blue text-5xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m0 6H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold text-custom-gray-dark mb-2">Transparent & Accountable</h3>
+                <p class="text-custom-gray">Access summaries and analytics (for coordinators & admins) to see how feedback is being processed and contributing to a better campus environment.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section id="team" class="py-16 md:py-24 bg-custom-gray-light">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-custom-gray-dark mb-4">Meet the Developers</h2>
+            <p class="text-custom-gray max-w-xl mx-auto">
+                Passionate individuals dedicated to enhancing the student experience through technology.
+            </p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-10">
+            <!-- Team Member 1 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center transition-transform duration-300 hover:scale-105">
+                <img src="https://pbs.twimg.com/profile_images/778282485113352192/_cbUvDZS_400x400.jpg" alt="Malik Azad" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-custom-blue-light">
+                <h3 class="text-xl font-semibold text-custom-gray-dark">Azad Ahmad Malik</h3>
+                <p class="text-custom-blue font-medium text-sm mb-1">Back End </p>
+                <p class="text-custom-gray text-sm">Crafting seamless user experiences and robust backend solutions. Oxford dictionary graduate</p>
+            </div>
+            <!-- Team Member 2 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center transition-transform duration-300 hover:scale-105">
+                <img src="https://stickershop.line-scdn.net/stickershop/v1/product/29491134/LINEStorePC/main.png?v=1" alt="Aabid" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-green-300">
+                <h3 class="text-xl font-semibold text-custom-gray-dark">Aabid Mohiudin</h3>
+                <p class="text-green-500 font-medium text-sm mb-1">Front End and UI</p>
+                <p class="text-custom-gray text-sm">Designing intuitive interfaces that make feedback a breeze.</p>
+            </div>
+            <!-- Team Member 3 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center transition-transform duration-300 hover:scale-105">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxbhBEFiNnJcAB_cESoGRkBSoicvYC1LSOmg&s" alt="Fazil" class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-orange-300">
+                <h3 class="text-xl font-semibold text-custom-gray-dark">Fazil Reyaz Lone</h3>
+                <p class="text-orange-500 font-medium text-sm mb-1">AI & Data Analyst</p>
+                <p class="text-custom-gray text-sm">Turning raw feedback into actionable insights with AI.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-16 md:py-24 bg-white">
+    <div class="container mx-auto px-6 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-custom-gray-dark mb-6">Get in Touch</h2>
+        <p class="text-custom-gray max-w-xl mx-auto mb-8">
+            Have questions, suggestions, or need support? We're here to help.
+        </p>
+        <a href="mailto:malikazad.web@gmail.com" class="bg-custom-blue text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-custom-blue-dark transition duration-300 ease-in-out text-lg">
+            Email Support
+        </a>
+        <p class="mt-6 text-sm text-custom-gray">
+            (Or contact your department coordinator for specific academic feedback concerns.)
+        </p>
+    </div>
+</section>
+
+{% endblock content %}

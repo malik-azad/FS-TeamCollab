@@ -11,14 +11,14 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     
     path('dashboard/student/', views.student_dashboard_view, name='student_dashboard'),
-    # TODO: Add URLs for coordinator and admin dashboards later
-    # path('dashboard/coordinator/', views.coordinator_dashboard_view, name='coordinator_dashboard'),
-    # path('dashboard/admin/', views.admin_dashboard_view, name='admin_dashboard'),
+    path('dashboard/coordinator/', views.coordinator_dashboard_view, name='coordinator_dashboard'), # NEW URL
+    # TODO: path('dashboard/admin/', views.admin_dashboard_view, name='admin_dashboard'),
 
     path('feedback/give/', views.give_feedback_view, name='give_feedback'),
-    
-    
-    # TODO: Add URLs for editing and deleting feedback later
-    # path('feedback/edit/<int:feedback_id>/', views.edit_feedback_view, name='edit_feedback'),
-    # path('feedback/delete/<int:feedback_id>/', views.delete_feedback_view, name='delete_feedback'),
+    path('feedback/<int:feedback_id>/view/', views.view_feedback_detail, name='view_feedback_detail'),
+    path('feedback/<int:feedback_id>/delete/', views.delete_feedback_view, name='delete_feedback'),
+    path('profile/edit/', views.edit_profile_view, name='edit_profile'), # NEW URL FOR EDIT PROFILE
+
+    # TODO: Add URL for editing feedback if ever introduced
+    # path('feedback/<int:feedback_id>/edit/', views.edit_feedback_view, name='edit_feedback'),
 ]

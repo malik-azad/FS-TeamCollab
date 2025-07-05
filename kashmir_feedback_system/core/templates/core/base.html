@@ -63,16 +63,16 @@
                         <a href="{% if request.resolver_match.url_name == 'landing_page' %}#team{% else %}{% url 'core:landing_page' %}#team{% endif %}" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Team</a>
                         <a href="{% if request.resolver_match.url_name == 'landing_page' %}#contact{% else %}{% url 'core:landing_page' %}#contact{% endif %}" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Contact</a>
                         
-                        {% if user.is_authenticated %}
+                       {% if user.is_authenticated %}
                             {% if user.profile.role == 'STUDENT' %}
-                                <a href="{% url 'core:student_dashboard' %}" class="bg-custom-blue text-white hover:bg-custom-blue-dark px-3 py-2 rounded-md text-sm font-medium ml-4">Dashboard</a>
+                                <a href="{% url 'core:student_dashboard' %}" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Student Dashboard</a>
                             {% elif user.profile.role == 'COORDINATOR' %}
-                                <a href="#" class="bg-custom-blue text-white hover:bg-custom-blue-dark px-3 py-2 rounded-md text-sm font-medium ml-4">Coordinator Panel</a>
+                                <a href="{% url 'core:coordinator_dashboard' %}" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Coordinator Panel</a>
                             {% elif user.profile.role == 'ADMIN' %}
-                                 <a href="#" class="bg-custom-blue text-white hover:bg-custom-blue-dark px-3 py-2 rounded-md text-sm font-medium ml-4">Admin Panel</a>
+                                 <a href="#" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Admin Panel</a> {# TODO: Link to admin_dashboard #}
                             {% endif %}
-                            <!-- <a href="#" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Profile</a> -->
-                            <form method="post" action="{% url 'core:logout' %}"> <!-- Replace with actual logout URL -->
+                            {# Removed My Profile link for now to simplify nav, can be added back #}
+                            <form method="post" action="{% url 'core:logout' %}" class="ml-2">
                                 {% csrf_token %}
                                 <button type="submit" class="text-custom-gray-dark hover:text-custom-blue px-3 py-2 rounded-md text-sm font-medium">Logout</button>
                             </form>
@@ -99,8 +99,17 @@
                 <a href="{% if request.resolver_match.url_name == 'landing_page' %}#team{% else %}{% url 'core:landing_page' %}#team{% endif %}" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Team</a>
                 <a href="{% if request.resolver_match.url_name == 'landing_page' %}#contact{% else %}{% url 'core:landing_page' %}#contact{% endif %}" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Contact</a>
                 {% if user.is_authenticated %}
-                    {% if user.profile.role == 'STUDENT' %} <a href="{% url 'core:student_dashboard' %}" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Dashboard</a> {% endif %}
-                     <form method="post" action="#"> {% csrf_token %} <button type="submit" class="w-full text-left text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Logout</button></form>
+                    {% if user.profile.role == 'STUDENT' %}
+                        <a href="{% url 'core:student_dashboard' %}" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Student Dashboard</a>
+                    {% elif user.profile.role == 'COORDINATOR' %}
+                        <a href="{% url 'core:coordinator_dashboard' %}" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Coordinator Panel</a>
+                    {% elif user.profile.role == 'ADMIN' %}
+                        <a href="#" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Admin Panel</a> {# TODO #}
+                    {% endif %}
+                    <form method="post" action="{% url 'core:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Logout</button>
+                    </form>
                 {% else %}
                     <a href="{% url 'core:login' %}" class="text-custom-gray-dark hover:bg-custom-blue-light hover:text-custom-blue block px-3 py-2 rounded-md text-base font-medium">Login</a>
                     <a href="{% url 'core:signup' %}" class="bg-custom-blue text-white hover:bg-custom-blue-dark block px-3 py-2 rounded-md text-base font-medium">Sign Up</a>

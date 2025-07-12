@@ -61,15 +61,6 @@
 
         <hr class="my-6">
 
-        <!-- Rating Questions Display Area -->
-        <h2 class="text-lg font-semibold text-custom-gray-dark mb-3">Your Ratings:</h2>
-        <div id="rating-questions-display-container" class="mb-6 rating-questions-container space-y-3">
-            <!-- JS will populate this section -->
-            <p class="text-custom-gray italic" id="rating-loading-placeholder">Loading rating details...</p>
-        </div>
-
-        <hr class="my-6">
-        
         <!-- Detailed Feedback (Text or Audio) -->
         {% if feedback.input_method == 'TEXT' and feedback.text_feedback %}
             <h2 class="text-lg font-semibold text-custom-gray-dark mb-2">Detailed Text Feedback:</h2>
@@ -96,6 +87,19 @@
                  <p class="text-custom-gray italic">No detailed text or audio feedback was provided for this entry.</p>
             </div>
         {% endif %}
+
+        <hr class="my-6">
+
+        <!-- Rating Questions Display Area -->
+        <h2 class="text-lg font-semibold text-custom-gray-dark mb-3">Ratings:</h2>
+        <div id="rating-questions-display-container" class="mb-6 rating-questions-container space-y-3">
+            <!-- JS will populate this section -->
+            <p class="text-custom-gray italic" id="rating-loading-placeholder">Loading rating details...</p>
+        </div>
+
+        <hr class="my-6">
+        
+        
         
     </div>
 </div>

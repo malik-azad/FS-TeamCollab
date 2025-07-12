@@ -39,7 +39,7 @@
         <form class="space-y-5" method="POST" novalidate>
             {% csrf_token %}
             
-            <div>
+            <div >
                 <!-- No label needed as we set it to '' and added placeholder in views.py -->
                 {{ form.username }} 
                 {% if form.username.errors %}
@@ -61,10 +61,10 @@
             
             <div class="flex items-center justify-between text-sm">
                 <div class="flex items-center">
-                    <!-- <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-custom-blue focus:ring-custom-blue-dark border-gray-300 rounded">
-                    <label for="remember-me" class="ml-2 block text-custom-gray"> Remember me </label> -->
+                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-custom-blue focus:ring-custom-blue-dark border-gray-300 rounded">
+                    <label for="remember-me" class="ml-2 block text-custom-gray"> Remember me </label> 
                 </div>
-                <a href="#" class="font-medium text-custom-blue hover:text-custom-blue-dark hover:underline">
+                <a href="#" onclick="alert('Contact your Department Coordinator.');return false;" class="font-medium text-custom-blue hover:text-custom-blue-dark hover:underline">
                     Forgot your password?
                 </a>
             </div>

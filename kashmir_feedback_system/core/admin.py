@@ -28,8 +28,8 @@ class FeedbackCategoryAdmin(admin.ModelAdmin):
     get_name_display_admin.short_description = 'Display Name' # Column header in admin
 
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ('student_username', 'category_name', 'timestamp', 'input_method', 'is_anonymous', 'department_at_submission')
-    list_filter = ('category', 'timestamp', 'is_anonymous', 'input_method', 'department_at_submission')
+    list_display = ('student_username', 'category_name', 'timestamp', 'sentiment', 'is_anonymous', 'department_at_submission')
+    list_filter = ('category', 'timestamp', 'is_anonymous', 'department_at_submission')
     search_fields = ('student__username', 'text_feedback', 'category__name')
     date_hierarchy = 'timestamp'
     readonly_fields = ('timestamp',) # Make timestamp read-only in detail view

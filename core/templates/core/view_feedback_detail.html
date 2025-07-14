@@ -1,0 +1,221 @@
+<!-- core/templates/core/view_feedback_detail.html -->
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Feedback Details - {{ feedback.category.get_name_display }}{% endblock title %}
+
+{% block extra_css %}
+<style>
+    /* Re-use styles from give_feedback.html for consistency */
+    .rating-questions-container .question-item { margin-bottom: 1.5rem; padding: 1rem; background-color: #f9fafb; border-radius: 0.5rem; border: 1px solid #e5e7eb; }
+    .rating-questions-container .question-text { display: block; margin-bottom: 0.75rem; font-weight: 500; color: #374151; }
+    .rating-questions-container .rating-options-display { display: flex; align-items: center; } /* For displaying the rating */
+    .rating-questions-container .rating-value { /* To style the selected rating, e.g., "Excellent (5)" */
+        font-weight: 600;
+        color: var(--color-custom-blue, #0ea5e9);
+        padding: 0.25rem 0.5rem;
+        background-color: var(--color-custom-blue-light, #e0f2fe);
+        border-radius: 0.25rem;
+    }
+    .rating-questions-container .no-rating {
+        font-style: italic;
+        color: #9ca3af; /* gray-400 */
+    }
+    .feedback-detail-card dd { margin-bottom: 0.5rem; }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-xl feedback-detail-card">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b">
+            <h1 class="text-2xl sm:text-3xl font-bold text-custom-gray-dark">
+                Feedback Details
+            </h1>
+            <a href="{% url 'core:student_dashboard' %}" class="text-sm text-custom-blue hover:underline">« Back to Dashboard</a>
+        </div>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+            <div class="sm:col-span-1"><dt class="font-medium text-custom-gray-dark">Category:</dt></div>
+            <div class="sm:col-span-2"><dd class="text-custom-gray">{{ feedback.category.get_name_display }}</dd></div>
+
+            <div class="sm:col-span-1"><dt class="font-medium text-custom-gray-dark">Submitted On:</dt></div>
+            <div class="sm:col-span-2"><dd class="text-custom-gray">{{ feedback.timestamp|date:"F d, Y, P" }}</dd></div>
+            
+            {% if feedback.department_at_submission %}
+            <div class="sm:col-span-1"><dt class="font-medium text-custom-gray-dark">Department (at submission):</dt></div>
+            <div class="sm:col-span-2"><dd class="text-custom-gray">{{ feedback.department_at_submission.name }}</dd></div>
+            {% endif %}
+
+            <div class="sm:col-span-1"><dt class="font-medium text-custom-gray-dark">Submitted Anonymously:</dt></div>
+            <div class="sm:col-span-2">
+                <dd class="text-custom-gray">
+                    {% if feedback.is_anonymous %}
+                        <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Yes</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">No</span>
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+
+        <hr class="my-6">
+
+        <!-- Detailed Feedback (Text or Audio) -->
+        {% if feedback.input_method == 'TEXT' and feedback.text_feedback %}
+            <h2 class="text-lg font-semibold text-custom-gray-dark mb-2">Detailed Text Feedback:</h2>
+            <div class="p-4 bg-gray-50 rounded-md prose max-w-none">
+                <p>{{ feedback.text_feedback|linebreaksbr }}</p>
+            </div>
+        {% elif feedback.input_method == 'AUDIO' and feedback.audio_feedback.url %}
+            <h2 class="text-lg font-semibold text-custom-gray-dark mb-2">Audio Feedback:</h2>
+            <div class="p-4 bg-gray-50 rounded-md">
+                <audio controls src="{{ feedback.audio_feedback.url }}" class="w-full">
+                    Your browser does not support the audio element. 
+                    You can <a href="{{ feedback.audio_feedback.url }}" download class="text-custom-blue hover:underline">download the audio file</a> instead.
+                </audio>
+                {% if feedback.text_feedback %} {# For future transcribed text #}
+                <div class="mt-4 pt-4 border-t">
+                    <h3 class="text-md font-medium text-custom-gray-dark mb-1">Transcription (if available):</h3>
+                    <p class="text-sm text-custom-gray italic">{{ feedback.text_feedback|linebreaksbr }}</p>
+                </div>
+                {% endif %}
+            </div>
+        {% elif not feedback.text_feedback and not feedback.audio_feedback.url and feedback.rating1 is None %} 
+            {# This condition might need refinement if ratings can be submitted alone #}
+            <div class="p-4 bg-gray-50 rounded-md text-center">
+                 <p class="text-custom-gray italic">No detailed text or audio feedback was provided for this entry.</p>
+            </div>
+        {% endif %}
+
+        <hr class="my-6">
+
+        <!-- Rating Questions Display Area -->
+        <h2 class="text-lg font-semibold text-custom-gray-dark mb-3">Ratings:</h2>
+        <div id="rating-questions-display-container" class="mb-6 rating-questions-container space-y-3">
+            <!-- JS will populate this section -->
+            <p class="text-custom-gray italic" id="rating-loading-placeholder">Loading rating details...</p>
+        </div>
+
+        <hr class="my-6">
+        
+        
+        
+    </div>
+</div>
+
+{{ rating_labels_data|json_script:"rating-labels-data" }}
+{# We don't need available_categories_data here, as category is fixed for this feedback #}
+
+<script>
+    // --- Data from Django json_script tags ---
+    let ratingLabels;
+    try {
+        const ratingsElement = document.getElementById('rating-labels-data');
+        if (ratingsElement && ratingsElement.textContent) {
+            ratingLabels = JSON.parse(ratingsElement.textContent);
+        } else {
+            console.error("JS: rating-labels-data script tag or its content not found.");
+            ratingLabels = {1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}; // Fallback
+        }
+    } catch (e) {
+        console.error("Error parsing rating_labels_data from Django script tag:", e);
+        ratingLabels = {1: '1', 2: '2', 3: '3', 4: '4', 5: '5'}; 
+    }
+    console.log("Parsed Rating Labels:", ratingLabels);
+
+    // The specific category key for this feedback item, passed from the view
+    const feedbackCategoryValueKey = '{{ category_value_key|escapejs }}'; // e.g., 'TEACHING'
+    console.log("Feedback Category Value Key:", feedbackCategoryValueKey);
+
+    // --- Hardcoded Questions Map (Same as in give_feedback.html) ---
+    const HARDCODED_CATEGORY_QUESTIONS = {
+        'TEACHING': [ "Clarity of explanations?", "Instructor engagement?", "Course content relevance?", "Fairness of grading?", "Overall teaching effectiveness?" ],
+        'INFRASTRUCTURE': [ "Classroom/lab conditions?", "IT resources (Wi-Fi, PCs)?", "Library resources/space?", "Sports facilities?", "Overall campus infrastructure?" ],
+        'TRANSPORT': [ "Transport punctuality?", "Bus comfort & safety?", "Route accessibility?", "Transport staff behavior?", "Overall transport satisfaction?" ],
+        'EXTRACURRICULAR': [ "Variety/quality of activities?", "Support for student clubs?", "Sports/cultural event opportunities?", "Communication about activities?", "Overall extracurricular satisfaction?" ],
+        'STAFF_BEHAVIOUR': [ "Administrative staff professionalism?", "Support staff helpfulness?", "Faculty accessibility (non-academic)?", "Fairness in staff dealings?", "Overall experience with staff?" ],
+        'CANTEEN': [ "Food quality/taste?", "Variety of food options?", "Canteen hygiene?", "Value for money?", "Overall canteen satisfaction?" ],
+        'LIBRARY': [ "Book/journal availability?", "Library staff helpfulness?", "Study environment comfort?", "Digital resource access?", "Overall library effectiveness?" ]
+    };
+    console.log("Hardcoded Category Questions Map:", HARDCODED_CATEGORY_QUESTIONS);
+
+    // Feedback object's ratings (passed from Django template context)
+    const feedbackRatings = {
+        rating1: {% if feedback.rating1 is not None %}{{ feedback.rating1 }}{% else %}null{% endif %},
+        rating2: {% if feedback.rating2 is not None %}{{ feedback.rating2 }}{% else %}null{% endif %},
+        rating3: {% if feedback.rating3 is not None %}{{ feedback.rating3 }}{% else %}null{% endif %},
+        rating4: {% if feedback.rating4 is not None %}{{ feedback.rating4 }}{% else %}null{% endif %},
+        rating5: {% if feedback.rating5 is not None %}{{ feedback.rating5 }}{% else %}null{% endif %}
+    };
+    console.log("Feedback Ratings from Django:", feedbackRatings);
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const ratingQuestionsDisplayContainer = document.getElementById('rating-questions-display-container');
+        const loadingPlaceholder = document.getElementById('rating-loading-placeholder');
+
+        if (!ratingQuestionsDisplayContainer) {
+            console.error("JS: rating-questions-display-container not found!");
+            return;
+        }
+
+        function displayFeedbackRatings() {
+            console.log("JS: Displaying feedback ratings for category key:", feedbackCategoryValueKey);
+            ratingQuestionsDisplayContainer.innerHTML = ''; // Clear placeholder or previous content
+
+            if (!feedbackCategoryValueKey || !HARDCODED_CATEGORY_QUESTIONS[feedbackCategoryValueKey]) {
+                console.warn("JS: No hardcoded questions found for key:", feedbackCategoryValueKey);
+                ratingQuestionsDisplayContainer.innerHTML = '<p class="text-custom-gray italic">Could not load specific questions for this category.</p>';
+                return;
+            }
+
+            const questions = HARDCODED_CATEGORY_QUESTIONS[feedbackCategoryValueKey];
+            console.log("JS: Questions for this category:", questions);
+
+            if (questions && questions.length > 0) {
+                questions.forEach((questionText, index) => {
+                    const questionIndex = index + 1;
+                    const ratingFieldName = `rating${questionIndex}`; // e.g., rating1
+                    const ratingValue = feedbackRatings[ratingFieldName]; // e.g., feedbackRatings.rating1 (will be number or null)
+
+                    const questionItemDiv = document.createElement('div');
+                    questionItemDiv.className = 'question-item';
+                    
+                    const questionTextSpan = document.createElement('span');
+                    questionTextSpan.className = 'question-text';
+                    questionTextSpan.textContent = `${questionIndex}. ${questionText}`;
+                    questionItemDiv.appendChild(questionTextSpan);
+
+                    const ratingDisplayDiv = document.createElement('div');
+                    ratingDisplayDiv.className = 'rating-options-display'; // Use a different class if layout is different
+
+                    if (ratingValue !== null && ratingLabels && ratingLabels[ratingValue]) {
+                        const ratingValueSpan = document.createElement('span');
+                        ratingValueSpan.className = 'rating-value';
+                        ratingValueSpan.textContent = `${ratingLabels[ratingValue]} (${ratingValue})`;
+                        ratingDisplayDiv.appendChild(ratingValueSpan);
+                    } else if (ratingValue !== null) { // Fallback if label missing, show number
+                        const ratingValueSpan = document.createElement('span');
+                        ratingValueSpan.className = 'rating-value';
+                        ratingValueSpan.textContent = `Rated: ${ratingValue}`;
+                        ratingDisplayDiv.appendChild(ratingValueSpan);
+                    } else {
+                        const noRatingSpan = document.createElement('span');
+                        noRatingSpan.className = 'no-rating';
+                        noRatingSpan.textContent = 'Not rated';
+                        ratingDisplayDiv.appendChild(noRatingSpan);
+                    }
+                    questionItemDiv.appendChild(ratingDisplayDiv);
+                    ratingQuestionsDisplayContainer.appendChild(questionItemDiv);
+                });
+            } else {
+                ratingQuestionsDisplayContainer.innerHTML = '<p class="text-custom-gray italic">No rating questions were associated with this feedback submission for this category.</p>';
+            }
+        }
+
+        // Display ratings on page load
+        displayFeedbackRatings();
+    });
+</script>
+{% endblock content %}
